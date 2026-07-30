@@ -1,0 +1,177 @@
+﻿PokerExams Reindexing Plan - Technical Documentation
+Status: Draft v1.0 
+Purpose: Resolve the duplicate-URL / non-indexation problem identified in the SEO audit by introducing two purpose-built, crawler-first subdomains, while leaving the main paid platform and its core tables untouched.
+
+1. Objectives
+1. Give search engines a small, clean, fully-crawlable set of URLs that demonstrate real topical depth per category - reversing the duplicate-content dilution identified in the audit.
+2. Keep the paid/main platform's schema and business logic completely untouched. New tables only.
+3. Eliminate the root cause found during the audit: multiple live URLs auto-generated for the same question content. Every question under the new architecture gets one permanent URL, forever.
+4. Build internal linking that mirrors good topical architecture: question → sibling questions → exam → category → back to main site.
+
+2. Data Model
+2.1 Tables that stay exactly as-is
+* subdivisions (categories - e.g. College Exams, Nursing Exams, IT Certification Exams)
+* All existing main-site tables: users, subscriptions, premium exams, premium questions, progress tracking, etc.
+Nothing in the current schema is modified, dropped, or renamed. The subdivisions table is read-only from the new subdomains' perspective - it's the shared join key that ties free content back to the correct category.
+2.2 New tables (structure mirrors the existing exams / questions tables exactly - same columns, same types - just a parallel, isolated data set)
+free_exams
+├── id                (PK, stable, never reused)
+├── subdivision_id    (FK → subdivisions.id)
+├── slug              (stable, permanent, unique)
+├── title
+├── question_count    (10-15)
+├── created_at
+└── updated_at         -- content edits update THIS row, never create a new one
+
+free_questions
+├── id                (PK, stable, never reused)
+├── free_exam_id      (FK → free_exams.id)
+├── position           -- 1..15, defines the fixed order within the exam
+├── slug              (stable, permanent, unique)
+├── question_text
+├── choice_a / b / c / d
+├── correct_choice
+├── rationale_a / b / c / d   -- per-option rationale, matches the pattern already proven to work on the main site's question pages
+├── conclusion_text
+├── created_at
+└── updated_at
+Critical rule carried over from the audit finding: id and slug are assigned once at creation and are immutable. If content needs a refresh (better rationale wording, corrected answer, etc.), it is an UPDATE to the existing row - it must never trigger a new row / new ID / new URL. This single rule is what prevents the duplicate-URL problem from reoccurring on the new subdomains.
+
+3. Subdomain 1 - free-quizzes.pokerexams.com
+3.1 Scope
+* Exactly 2 free exams per subdivision, each with 10-15 questions, pulled from free_exams / free_questions.
+* Every subdivision in the existing subdivisions table gets its own pair of free exams.
+3.2 URL Structure
+free-quizzes.pokerexams.com/{subdivision-slug}/{exam-slug}
+Example:
+free-quizzes.pokerexams.com/college-exams/clep-math-quiz-1
+* {exam-slug} root URL (no position) = question 1, and is the canonical URL for the whole exam.
+3.3 UI Behavior vs. Crawlability (the part that needs the most engineering care)
+Requirement: Users see one question at a time with Next/Previous controls. Crawlers must see all 10-15 questions.
+Recommended implementation - server-render everything, hide client-side:
+1. The server renders all 10-15 questions, choices, and rationale in full into the initial HTML response for the exam root URL (/{subdivision-slug}/{exam-slug}). Nothing is fetched via a separate AJAX call after load.
+2. Only question #1's block is visually shown by default (display: block); questions #2-15 are present in the DOM but visually hidden (display: none / aria-hidden toggled by JS), not removed or lazy-loaded.
+3. Next/Previous buttons just toggle which block is visible client-side - no navigation, no new page load, no re-fetch.
+4. Do not use visibility:hidden combined with height:0 + overflow:hidden tricks that some crawlers may interpret as "hidden = low value." Plain display:none toggled by JS for a paginated single-page component is a well-established, safe pattern - the equivalent of an accordion or tab panel, which Google explicitly supports crawling.
+5. Individual /{question-url} URLs (3.2) should also independently server-render their specific question in full - they are not purely client-side routes. Treat them as real pages with rel="canonical" pointing to themselves (they are unique, addressable content, not duplicates of the exam root - see 3.6).
+6. Add pagination hints: <link rel="next"> / <link rel="prev"> between sequential question- URLs.
+The UX stays a clean one-at-a-time flow, and the crawler-visible HTML contains the entire exam.
+3.4 Left Sidebar - Section A: "Similar Exams" (same subdivision)
+Directly links to the other free exam in the same subdivision.
+Rule: for the current free_exam (subdivision_id = X),
+      show the sibling free_exam where subdivision_id = X AND id != current.id
+Link text: sibling exam's title
+Link target: free-quizzes.pokerexams.com/{subdivision-slug}/{sibling-exam-slug}
+Since there are only 2 free exams per subdivision, this is always a single, deterministic link - e.g. viewing CLEP Math Quiz 1 always shows CLEP Math Quiz 2.
+3.5 Left Sidebar - Section B: "Other Exams in [Subdivision]" (list of 5)
+This links out to more free content for the same subdivision  .
+The page has a logo & back to library page that is the internal-link bridge that passes authority from the new crawlable subdomain into the main platform.
+Selection algorithm:
+function getOtherExams(currentExamId, subdivisionId, Free_exams_table):
+    candidates = Free_exams_table.where(
+        subdivision_id == subdivisionId,
+        id > currentExamId
+    ).order_by(id ASC)
+
+    results = candidates.take(5)
+
+    if results.length < 5:
+        needed = 5 - results.length
+        wraparound = Free_exams_table.where(
+            subdivision_id == subdivisionId,
+            id NOT IN results.ids,
+            id != currentExamId
+        ).order_by(id ASC).take(needed)
+        results = results + wraparound
+
+    return results.take(5)   # hard cap, in case subdivision has fewer than 5 total non-current exams
+3.6 Metadata Requirements per Page
+ElementRule<title>Unique per exam/question - e.g. "CLEP Math Quiz 1 - Free Practice Questions | PokerExams"meta descriptionUnique, includes subject + question count, no boilerplate repetition across examscanonicalSelf-referencing; exam root canonicalizes to itselfrobotsindex, followStructured dataQuiz / Question schema (schema.org) per question block, BreadcrumbList for subdivision → exam → question
+4. Subdomain 2 - questions.pokerexams.com
+4.1 Purpose
+Replace the main site's problematic /questions/{slug}-{id} pattern (which was generating multiple live duplicate URLs per question, per the audit) with one stable, canonical home per question, and route all future indexing signal there.
+4.2 URL Structure
+questions.pokerexams.com/{question-slug}
+No numeric ID in the URL. The ID lives in the database only; the slug is generated once at creation and is permanent (same immutability rule as Section 2.2).
+4.3 "5 Similar Questions" Sidebar/Section
+Pulled from the same parent exam as the current question.
+function getSimilarQuestions(currentQuestionId, examId, questionsTable):
+    candidates = questionsTable.where(
+        exam_id == examId,
+        id > currentQuestionId
+    ).order_by(id ASC)
+
+    results = candidates.take(5)
+
+    if results.length < 5:
+        needed = 5 - results.length
+        wraparound = questionsTable.where(
+            exam_id == examId,
+            id NOT IN results.ids,
+            id != currentQuestionId
+        ).order_by(id ASC).take(needed)
+        results = results + wraparound
+
+    return results.take(5)
+This is the identical wraparound pattern used in Section 3.5, applied one level down (questions within an exam instead of exams within a subdivision) 
+4.4 Backlinks to Main Site
+Every question page includes two fixed links back to the unmodified main platform:
+"Full [Exam Name] Practice Test" → pokerexams.com/library/courses/exams/{main-exam-slug}
+"[Subdivision Name] Exams"       → pokerexams.com/library/categories/{subdivision-slug}
+4.5 Metadata Requirements
+Same table as Section 3.6, applied per question page. Meta description should surface the correct answer text directly (this already works well on the existing main-site question pages per the audit - carry the pattern forward).
+
+5. Migration Plan for Existing Duplicate Question URLs
+This is the cleanup half of the plan - without it, the old duplicates keep competing with the new canonical pages.
+Step 1 - Inventory. Query the main site's existing questions table for all rows
+Step 2 - Generate a survivor per cluster.  New url for the questions with full question no numbers
+Step 3 - No redirect chains. Audit that no redirect points to another redirect. 
+
+6. Cross-Domain SEO Configuration
+6.1 robots.txt (one file per subdomain, since robots.txt is host-specific)
+free-quizzes.pokerexams.com/robots.txt
+  User-agent: *
+  Allow: /
+  Sitemap: https://free-quizzes.pokerexams.com/sitemap.xml
+
+questions.pokerexams.com/robots.txt
+  User-agent: *
+  Allow: /
+  Sitemap: https://questions.pokerexams.com/sitemap.xml
+
+pokerexams.com/robots.txt
+  (unchanged, but confirm it references its own sitemap and does not
+   accidentally block /library or /questions paths - verify per the
+   open item from the original audit)
+6.2 XML Sitemaps
+* free-quizzes.pokerexams.com/sitemap.xml - lists every exam root URL + every question-position URL
+* questions.pokerexams.com/sitemap.xml - lists every migrated/canonical question URL
+* Both submitted as separate properties in Google Search Console (subdomains are indexed as distinct hosts)
+* Main site sitemap updated to remove any URLs that were retired in Section 5
+6.3 Canonicalization Rules (avoid the subdomains competing with each other or the main site)
+* Free-quiz content is exclusive to free-quizzes.pokerexams.com - it does not also exist word-for-word on the main site, so there's no cross-domain duplicate risk by design.
+* Migrated questions canonicalize to questions.pokerexams.com only; 
+* No page should ever declare a canonical pointing to a different host than a page a user can actually still land on and browse - i.e., don't canonical a live page to a URL that itself redirects elsewhere.
+6.4 Structured Data
+Add Quiz/Question schema.org markup on both new subdomains (Sections 3.6 / 4.5). This is new - the main site's existing question pages don't appear to have this per the earlier fetch - and is a low-cost way to qualify for rich results.
+
+7. QA / Pre-Launch Crawlability Checklist
+* [ ] Fetch each new page type with a plain HTTP client (no JS execution) and confirm all 10-15 questions are present in the raw HTML on free-quizzes exam pages
+* [ ] Confirm meta-robots: index, follow on every new template (exam root, question-position, question subdomain page)
+* [ ] Confirm every canonical tag is self-referencing (or correctly points to itself post-slug-finalization)
+* [ ] Run the wraparound sidebar algorithm against a subdivision with fewer than 5 non-current exams/questions to confirm it degrades gracefully instead of erroring
+* [ ] Confirm no free_questions or questions row can be re-created with a new ID for existing content - enforce via unique constraint on a content-hash column if needed as a safety net
+* [ ] Validate both new sitemap.xml files against the sitemap protocol
+* [ ] Confirm robots.txt on both subdomains is reachable and correctly scoped (host-specific, not inherited from root domain)
+* [ ] Spot-check 10 redirected duplicate URLs from Section 5 to confirm single-hop 301s with no chains or loops
+* [ ] Confirm internal links from the main site to any retired duplicate URLs have been updated to point directly to survivors
+
+8. Rollout Phases
+Phase 1 - Build (new tables, no public exposure) Stand up free_exams / free_questions, populate 2 exams × 10-15 questions for every existing subdivision, migrate content for a pilot batch of questions into a staging questions table.
+Phase 2 - questions.pokerexams.com launch Launch with the pilot batch, run the QA checklist, submit sitemap, monitor Search Console coverage for 1-2 weeks before migrating remaining questions in batches (avoid dumping the entire corpus at once - stagger to watch for indexing/crawl-rate issues early).
+Phase 3 - Migrate remaining duplicate clusters Work through Section 5's full inventory in batches, redirecting as each batch's replacement page is confirmed indexed.
+Phase 4 - free-quizzes.pokerexams.com launch Launch once the question-subdomain pattern is validated as indexing correctly - this de-risks the free-quiz launch by proving the crawlability approach first on the simpler of the two subdomains.
+Phase 5 - Monitor See Section 9.
+
+9. Success Metrics (post-launch)
+MetricWhere to checkTarget signalIndexed page count per subdomainGSC Coverage report (per-property)Rising toward total published countDuplicate-without-canonical exclusionsGSC Coverage → ExcludedShould drop toward zero on migrated clusterssite: operator sample checksManual, weeklyNew subdomain URLs start appearingOrganic clicks to free-quizzes.* and questions.*GSC PerformanceNon-zero and growing after Phase 2/4Crawl statsGSC Crawl Stats (per property)Steady crawl requests, not spiking/erroring
