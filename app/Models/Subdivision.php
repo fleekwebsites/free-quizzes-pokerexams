@@ -5,9 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-/**
- * Subdivisions map to the main site's schools table (read-only join key).
- */
 class Subdivision extends Model
 {
     protected $table = 'schools';
