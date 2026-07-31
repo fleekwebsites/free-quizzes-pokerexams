@@ -23,13 +23,28 @@ if (! function_exists('free_url')) {
     }
 }
 
+if (! function_exists('seo_absolute_url')) {
+    /** Absolute URL for JSON-LD and canonical structured data. */
+    function seo_absolute_url(?string $value): string
+    {
+        $value = trim((string) $value);
+        if ($value === '') {
+            return url('/');
+        }
+
+        if (str_starts_with($value, 'http://') || str_starts_with($value, 'https://')) {
+            return $value;
+        }
+
+        return url($value);
+    }
+}
+
 if (! function_exists('course_url')) {
+    /** School page anchor for a course (no standalone course page). */
     function course_url(string $subdivisionSlug, string $courseSlug): string
     {
-        return route('course.show', [
-            'subdivision' => $subdivisionSlug,
-            'course' => $courseSlug,
-        ]);
+        return route('subdivision.show', $subdivisionSlug).'#course-'.$courseSlug;
     }
 }
 

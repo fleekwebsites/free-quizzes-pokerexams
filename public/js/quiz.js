@@ -292,35 +292,11 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 
-    // --- Timer Logic ---
-    let timerSeconds = 0;
-    setInterval(() => {
-        timerSeconds++;
-        const mins = String(Math.floor(timerSeconds / 60)).padStart(2, "0");
-        const secs = String(timerSeconds % 60).padStart(2, "0");
-        const timeStr = `${mins}:${secs}`;
-
-        let elDesk = document.getElementById("elapsed-timer");
-        let elMob = document.getElementById("elapsed-timer-mobile");
-        if (elDesk) elDesk.innerText = timeStr;
-        if (elMob) elMob.innerText = timeStr;
-    }, 1000);
-
     // --- Navigation Logic (Sliding between all questions) ---
     window.goToSlide = function (index) {
         const total = window.quizConfig.totalQuestions;
         if (index < 0 || index >= total) {
             if (index >= total) {
-                const timerElement = document.getElementById("elapsed-timer");
-                const finalTime = timerElement
-                    ? timerElement.innerText
-                    : "00:00";
-
-                sessionStorage.setItem(
-                    "exam_time_" + window.quizConfig.examId,
-                    finalTime,
-                );
-
                 if (window.quizConfig.subdivisionUrl) {
                     window.location.href = window.quizConfig.subdivisionUrl;
                 }
@@ -511,7 +487,6 @@ document.addEventListener("DOMContentLoaded", function () {
                         selected_option: selectedValue,
                         exam_id: window.quizConfig.examId,
                         index: index,
-                        time_spent: timerSeconds,
                     }),
                 })
                     .then((res) => {

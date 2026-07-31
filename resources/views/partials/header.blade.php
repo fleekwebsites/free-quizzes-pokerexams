@@ -17,7 +17,7 @@
                 </button>
                 @endif
 
-                <a class="pe-header-brand" href="{{ route('library.index') }}">
+                <a class="pe-header-brand" href="{{ main_url('/') }}">
                     <div class="pe-brand-logo-wrapper">
                         <img src="{{ asset('img/logo.png') }}" alt="Poker Exams Logo" width="40" height="40" loading="eager">
                     </div>
@@ -36,8 +36,9 @@
                             <path d="m21 21-4.3-4.3"></path>
                         </svg>
 
-                        <input type="text" id="headerSearchInput" class="pe-header-search-input"
-                            placeholder="Search exams, courses, or quizzes…" autocomplete="off">
+                        <input type="search" id="headerSearchInput" class="pe-header-search-input"
+                            placeholder="Search exams, courses, or quizzes…" autocomplete="off"
+                            aria-label="Search exams, courses, or quizzes">
 
                         <div id="headerSearchDropdown" class="pe-search-dropdown">
                             <div id="headerSearchResults"></div>
@@ -47,9 +48,8 @@
 @else
                 <div class="pe-header-spacer"></div>
 @endif
-
                 <nav class="pe-header-nav">
-                    <a class="pe-nav-link{{ ($activeNav ?? 'library') === 'home' ? ' active' : '' }}" href="{{ main_url('/') }}">
+                    <a class="pe-nav-link{{ ($activeNav ?? 'library') === 'home' ? ' active' : '' }}" href="{{ route('library.index') }}">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"></path>
@@ -59,7 +59,7 @@
                         </svg>
                         Home
                     </a>
-                    <a class="pe-nav-link{{ ($activeNav ?? 'library') === 'library' ? ' active' : '' }}" href="{{ route('library.index') }}">
+                    <a class="pe-nav-link{{ ($activeNav ?? 'library') === 'library' ? ' active' : '' }}" href="https://pokerexams.com/library">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <rect width="18" height="18" x="3" y="3" rx="2"></rect>

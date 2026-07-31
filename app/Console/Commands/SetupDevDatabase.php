@@ -2,10 +2,11 @@
 
 namespace App\Console\Commands;
 
-use Database\Seeders\DevDatabaseSeeder;
+use Database\Seeders\Dataimport\FreeSeeder;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use PDO;
 use PDOException;
 
@@ -13,7 +14,7 @@ class SetupDevDatabase extends Command
 {
     protected $signature = 'db:setup-dev {--fresh : Drop all tables before migrating}';
 
-    protected $description = 'Create pokerexams_dev with Laravel defaults plus schools, courses, subjects, free_exams, and free_questions';
+    protected $description = 'Create pokerexams_dev, run migrations, and optionally seed from database/seeders/data/freedata/*.csv';
 
     public function handle(): int
     {
@@ -32,11 +33,18 @@ class SetupDevDatabase extends Command
         Artisan::call('migrate', ['--force' => true]);
         $this->output->write(Artisan::output());
 
-        Artisan::call('db:seed', [
-            '--class' => DevDatabaseSeeder::class,
-            '--force' => true,
-        ]);
-        $this->output->write(Artisan::output());
+        $freedataDir = database_path('seeders/data/freedata');
+        $csvFiles = File::exists($freedataDir) ? File::glob($freedataDir.'/*.csv') : [];
+
+        if ($csvFiles !== []) {
+            Artisan::call('db:seed', [
+                '--class' => FreeSeeder::class,
+                '--force' => true,
+            ]);
+            $this->output->write(Artisan::output());
+        } else {
+            $this->warn('No CSV files in database/seeders/data/freedata — seeding skipped.');
+        }
 
         $this->newLine();
         $this->info('Dev database ready.');

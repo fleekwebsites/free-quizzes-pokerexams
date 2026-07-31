@@ -10,6 +10,11 @@ return [
     */
     'main_site_url' => rtrim(env('MAIN_SITE_URL', 'https://pokerexams.com'), '/'),
 
+    'whatsapp' => [
+        'phone' => env('WHATSAPP_PHONE', '15107718152'),
+        'message' => env('WHATSAPP_MESSAGE', 'Hello...'),
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Static course slug → subdivision (school) slug mapping

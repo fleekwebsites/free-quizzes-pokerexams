@@ -3,6 +3,13 @@ document.addEventListener("DOMContentLoaded", function () {
     var sidebar = document.getElementById("mainSidebar");
     var overlay = document.getElementById("sidebarOverlay");
 
+    function closeSidebar() {
+        if (!sidebar || !overlay) return;
+        sidebar.classList.remove("active");
+        overlay.classList.remove("active");
+        document.body.style.overflow = "";
+    }
+
     if (menuBtn && sidebar && overlay) {
         function toggleSidebar() {
             var open = sidebar.classList.toggle("active");
@@ -13,30 +20,33 @@ document.addEventListener("DOMContentLoaded", function () {
         overlay.addEventListener("click", toggleSidebar);
     }
 
-    document.querySelectorAll(".sidebar-menu-btn").forEach(function (btn) {
-        var sublist = btn.nextElementSibling;
-        var arrow = btn.querySelector(".sb-arrow");
-        if (!sublist || !sublist.classList.contains("sidebar-sublist")) return;
-
-        if (btn.classList.contains("active") || sublist.classList.contains("is-open")) {
-            sublist.classList.remove("is-hidden");
-            sublist.classList.add("is-open");
-            if (arrow) arrow.classList.add("open");
-        } else {
-            sublist.classList.add("is-hidden");
+    function scrollToCourseAnchor(slug) {
+        if (!slug && window.location.hash && window.location.hash.indexOf("#course-") === 0) {
+            slug = window.location.hash.slice(8);
         }
+        if (!slug) return;
 
-        btn.addEventListener("click", function () {
-            var hidden = sublist.classList.toggle("is-hidden");
-            sublist.classList.toggle("is-open", !hidden);
-            if (arrow) arrow.classList.toggle("open", !hidden);
+        var courseEl = document.getElementById("course-" + slug);
+        if (!courseEl) return;
+
+        courseEl.classList.add("is-active");
+        requestAnimationFrame(function () {
+            courseEl.scrollIntoView({ behavior: "smooth", block: "start" });
         });
+    }
+
+    scrollToCourseAnchor();
+    window.addEventListener("hashchange", function () {
+        scrollToCourseAnchor();
     });
 
     document.querySelectorAll(".cat-card-header").forEach(function (header) {
         header.addEventListener("click", function () {
             if (window.innerWidth >= 640) return;
+
             var card = header.closest(".cat-card");
+            if (!card) return;
+
             var wasOpen = card.classList.contains("is-expanded");
             document.querySelectorAll(".cat-card.is-expanded").forEach(function (c) {
                 c.classList.remove("is-expanded");

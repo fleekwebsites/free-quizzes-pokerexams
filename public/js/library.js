@@ -26,8 +26,8 @@ document.addEventListener("DOMContentLoaded", function () {
         if (btn.classList.contains("active") || sublist.classList.contains("is-open")) {
             sublist.classList.remove("is-hidden");
             sublist.classList.add("is-open");
-            if (arrow) arrow.classList.add("open");
-        } else {
+                    if (arrow) arrow.classList.add("open");
+                } else {
             sublist.classList.add("is-hidden");
         }
 
@@ -338,6 +338,257 @@ document.addEventListener("DOMContentLoaded", function () {
 
     let currentStreak = 0;
 
+    const ICON_CHECK_SM =
+        '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-check w-5 h-5"><circle cx="12" cy="12" r="10"></circle><path d="m9 12 2 2 4-4"></path></svg>';
+    const ICON_X_SM =
+        '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-x w-5 h-5"><circle cx="12" cy="12" r="10"></circle><path d="m15 9-6 6"></path><path d="m9 9 6 6"></path></svg>';
+
+    function parseAnswerList(value) {
+        return String(value || "")
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean)
+            .sort();
+    }
+
+    function updateQuizStats(stats) {
+        if (!stats) return;
+
+        const answeredEl = document.getElementById("stat-answered");
+        if (answeredEl) {
+            answeredEl.innerHTML = `${stats.answered}<span class="text-xs text-slate-400 font-medium">/${window.quizConfig.totalQuestions}</span>`;
+        }
+
+        const correctEl = document.getElementById("stat-correct");
+        if (correctEl) correctEl.innerText = stats.correct;
+
+        const incorrectEl = document.getElementById("stat-incorrect");
+        if (incorrectEl) incorrectEl.innerText = stats.incorrect;
+
+        const remainEl = document.getElementById("stat-remaining");
+        if (remainEl) {
+            remainEl.innerText = `${window.quizConfig.totalQuestions - stats.answered} left`;
+        }
+
+        const fractionEl = document.getElementById("stat-fraction");
+        if (fractionEl) {
+            fractionEl.innerText = `${stats.correct}/${stats.answered} correct`;
+        }
+
+        const accuracy = stats.accuracy || 0;
+        let circleColor = "#cbd5e1";
+        if (stats.answered > 0) {
+            circleColor =
+                accuracy >= 70 ? "#10b981" : accuracy >= 40 ? "#f59e0b" : "#ef4444";
+        }
+
+        const circumference = 276.46015351590177;
+        const dashOffset = circumference - (accuracy / 100) * circumference;
+        const statCircle = document.getElementById("stat-circle");
+        if (statCircle) {
+            statCircle.setAttribute("stroke", circleColor);
+            statCircle.setAttribute("stroke-dashoffset", dashOffset);
+        }
+
+        const statPercentage = document.getElementById("stat-percentage");
+        if (statPercentage) {
+            statPercentage.innerText = accuracy + "%";
+            statPercentage.style.color = circleColor;
+        }
+    }
+
+    function revealAnswerFeedback({
+        slide,
+        answerOptions,
+        correctAnswer,
+        selectedValue,
+        index,
+    }) {
+        const correctArray = parseAnswerList(correctAnswer);
+        const selectedArray = parseAnswerList(selectedValue);
+        const exactCorrectStr = correctArray.join(", ");
+        const pickedAnswerStr = selectedArray.join(", ");
+        const isFullyCorrect =
+            JSON.stringify(selectedArray) === JSON.stringify(correctArray);
+
+        if (isFullyCorrect) {
+            currentStreak++;
+        } else {
+            currentStreak = 0;
+        }
+
+        const streakContainer = document.getElementById("streak-container");
+        const streakCountEl = document.getElementById("streak-count");
+        if (streakContainer && streakCountEl) {
+            if (currentStreak > 0) {
+                streakCountEl.innerText = currentStreak;
+                streakContainer.style.display = "flex";
+            } else {
+                streakContainer.style.display = "none";
+            }
+        }
+
+        const navBtn = document.getElementById("nav-btn-" + index);
+        if (navBtn) {
+            navBtn.setAttribute("data-state", isFullyCorrect ? "correct" : "incorrect");
+            const base =
+                "nav-btn w-full aspect-square rounded-xl border-2 flex items-center justify-center text-xs font-bold transition-all duration-200 select-none cursor-pointer scale-105 shadow-md ";
+            navBtn.className =
+                base +
+                (isFullyCorrect
+                    ? "bg-emerald-500 border-emerald-500 text-white shadow-emerald-500/40"
+                    : "bg-red-500 border-red-500 text-white shadow-red-500/40");
+        }
+
+        const mobileDots = document.querySelectorAll("#mobile-progress-bar .mobile-dot");
+        if (mobileDots[index]) {
+            mobileDots[index].className =
+                "flex-1 h-1.5 rounded-full transition-all mobile-dot " +
+                (isFullyCorrect ? "bg-emerald-500" : "bg-red-500");
+        }
+
+        answerOptions.forEach((opt) => {
+            const val = opt.getAttribute("data-value");
+            const iconBox = opt.querySelector(".option-icon");
+            opt.classList.add("is-revealed");
+            opt.classList.remove(
+                "border-[#06BBCC]",
+                "bg-[#06BBCC]/5",
+                "is-selected"
+            );
+
+            if (correctArray.includes(val)) {
+                opt.classList.remove("opacity-40", "border-slate-200");
+                opt.classList.add(
+                    "border-emerald-400",
+                    "bg-emerald-50",
+                    "shadow-emerald-100",
+                    "shadow-md",
+                    "opacity-100"
+                );
+                iconBox.classList.remove("bg-slate-100", "text-slate-500");
+                iconBox.classList.add("bg-emerald-500", "text-white");
+                iconBox.innerHTML = ICON_CHECK_SM;
+            } else if (selectedArray.includes(val) && !isFullyCorrect) {
+                opt.classList.remove("opacity-40", "border-slate-200");
+                opt.classList.add(
+                    "border-red-400",
+                    "bg-red-50",
+                    "shadow-red-100",
+                    "shadow-md",
+                    "opacity-100"
+                );
+                iconBox.classList.remove("bg-slate-100", "text-slate-500");
+                iconBox.classList.add("bg-red-500", "text-white");
+                iconBox.innerHTML = ICON_X_SM;
+            }
+        });
+
+        const rationaleContainer = slide.querySelector(".rationale-container");
+        const rationaleBox = rationaleContainer.querySelector(".rationale-box");
+        const rHeader = rationaleBox.querySelector(".r-header");
+        rHeader.className = "flex flex-wrap gap-3 mb-3 r-header";
+
+        if (isFullyCorrect) {
+            rationaleBox.classList.remove("border-red-200", "bg-red-50/40");
+            rationaleBox.classList.add("border-emerald-200", "bg-emerald-50/40");
+            rHeader.innerHTML =
+                '<div class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-semibold bg-emerald-100 text-emerald-700">' +
+                '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-check"><circle cx="12" cy="12" r="10"></circle><path d="m9 12 2 2 4-4"></path></svg>' +
+                "Your Answer: Option(s) " +
+                pickedAnswerStr +
+                "</div>";
+        } else {
+            rationaleBox.classList.remove("border-emerald-200", "bg-emerald-50/40");
+            rationaleBox.classList.add("border-red-200", "bg-red-50/40");
+            rHeader.innerHTML =
+                '<div class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-semibold bg-red-100 text-red-600">' +
+                '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-x"><circle cx="12" cy="12" r="10"></circle><path d="m15 9-6 6"></path><path d="m9 9 6 6"></path></svg>' +
+                "Your Answer: Option(s) " +
+                pickedAnswerStr +
+                '</div><div class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-semibold bg-emerald-100 text-emerald-700">' +
+                '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-check"><circle cx="12" cy="12" r="10"></circle><path d="m9 12 2 2 4-4"></path></svg>' +
+                "Correct Answer: Option(s) " +
+                exactCorrectStr +
+                "</div>";
+        }
+
+        rationaleContainer.style.display = "block";
+        rationaleContainer.classList.remove("is-hidden");
+
+        const selectMsg = slide.querySelector(".select-to-continue");
+        if (selectMsg) {
+            selectMsg.style.display = "none";
+            selectMsg.classList.add("is-hidden");
+        }
+
+        syncSlideFooter(slide);
+    }
+
+    function getExamSummary() {
+        const total = window.quizConfig.totalQuestions || 0;
+        let correct = 0;
+        let incorrect = 0;
+
+        document.querySelectorAll(".nav-btn").forEach((btn) => {
+            const state = btn.getAttribute("data-state");
+            if (state === "correct") correct++;
+            else if (state === "incorrect") incorrect++;
+        });
+
+        const answered = correct + incorrect;
+        const accuracy = answered > 0 ? Math.round((correct / answered) * 100) : 0;
+
+        return { total, correct, incorrect, answered, accuracy };
+    }
+
+    function showExamCompleteModal() {
+        const modal = document.getElementById("modal-exam-complete");
+        if (!modal) return;
+
+        const summary = getExamSummary();
+        const summaryEl = document.getElementById("exam-complete-summary");
+
+        if (summaryEl) {
+            if (summary.answered === 0) {
+                summaryEl.textContent =
+                    "What would you like to do next?";
+            } else {
+                summaryEl.textContent =
+                    "You got " +
+                    summary.correct +
+                    " of " +
+                    summary.answered +
+                    " correct (" +
+                    summary.accuracy +
+                    "%). What next?";
+            }
+        }
+
+        modal.style.display = "flex";
+        document.body.style.overflow = "hidden";
+    }
+
+    function hideExamCompleteModal() {
+        const modal = document.getElementById("modal-exam-complete");
+        if (!modal) return;
+        modal.style.display = "none";
+        document.body.style.overflow = "";
+    }
+
+    const completeModal = document.getElementById("modal-exam-complete");
+    const reviewCompleteBtn = document.getElementById("btn-review-complete");
+    if (reviewCompleteBtn) {
+        reviewCompleteBtn.addEventListener("click", hideExamCompleteModal);
+    }
+    if (completeModal) {
+        completeModal.addEventListener("click", function (event) {
+            if (event.target === completeModal) {
+                hideExamCompleteModal();
+            }
+        });
+    }
+
     const exitModal = document.getElementById("modal-exit-quiz");
     const switchModal = document.getElementById("modal-switch-quiz");
     const rateBtn = document.getElementById("btn-rate-quiz");
@@ -441,38 +692,12 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 
-    // --- Timer Logic ---
-    let timerSeconds = 0;
-    setInterval(() => {
-        timerSeconds++;
-        const mins = String(Math.floor(timerSeconds / 60)).padStart(2, "0");
-        const secs = String(timerSeconds % 60).padStart(2, "0");
-        const timeStr = `${mins}:${secs}`;
-
-        let elDesk = document.getElementById("elapsed-timer");
-        let elMob = document.getElementById("elapsed-timer-mobile");
-        if (elDesk) elDesk.innerText = timeStr;
-        if (elMob) elMob.innerText = timeStr;
-    }, 1000);
-
     // --- Navigation Logic (Sliding between all questions) ---
     window.goToSlide = function (index) {
         const total = window.quizConfig.totalQuestions;
         if (index < 0 || index >= total) {
             if (index >= total) {
-                const timerElement = document.getElementById("elapsed-timer");
-                const finalTime = timerElement
-                    ? timerElement.innerText
-                    : "00:00";
-
-                sessionStorage.setItem(
-                    "exam_time_" + window.quizConfig.examId,
-                    finalTime,
-                );
-
-                if (window.quizConfig.subdivisionUrl) {
-                    window.location.href = window.quizConfig.subdivisionUrl;
-                }
+                showExamCompleteModal();
             }
             return;
         }
@@ -634,7 +859,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
             // Centralized submit logic
             const submitAnswer = (questionId, selectedValue) => {
-                // 1. Visually disable all options immediately
+                const correctAnswer =
+                    container.getAttribute("data-correct-answer") || "";
+
                 answerOptions.forEach((opt) => {
                     opt.disabled = true;
                     opt.classList.add("opacity-40", "cursor-default");
@@ -648,7 +875,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 if (checkAnswerBtn) checkAnswerBtn.style.display = "none";
 
-                // 2. Fetch correct answer from backend
+                revealAnswerFeedback({
+                    slide,
+                    answerOptions,
+                    correctAnswer,
+                    selectedValue,
+                    index,
+                });
+
                 fetch(window.quizConfig.submitUrl, {
                     method: "POST",
                     headers: {
@@ -660,314 +894,19 @@ document.addEventListener("DOMContentLoaded", function () {
                         selected_option: selectedValue,
                         exam_id: window.quizConfig.examId,
                         index: index,
-                        time_spent: timerSeconds,
                     }),
                 })
                     .then((res) => {
-                        
                         if (!res.ok) throw new Error("Network response error");
                         return res.json();
                     })
                     .then((data) => {
-                        if (data.success) {
-                            
-                            if (data.stats) {
-                                let answeredEl = document.getElementById("stat-answered");
-                                if (answeredEl)
-                                    answeredEl.innerHTML = `${data.stats.answered}<span class="text-xs text-slate-400 font-medium">/${window.quizConfig.totalQuestions}</span>`;
-
-                                let correctEl = document.getElementById("stat-correct");
-                                if (correctEl) correctEl.innerText = data.stats.correct;
-
-                                let incorrectEl = document.getElementById("stat-incorrect");
-                                if (incorrectEl) incorrectEl.innerText = data.stats.incorrect;
-
-                                let remainEl = document.getElementById("stat-remaining");
-                                if (remainEl)
-                                    remainEl.innerText = `${window.quizConfig.totalQuestions - data.stats.answered} left`;
-
-                                let fractionEl = document.getElementById("stat-fraction");
-                                if (fractionEl)
-                                    fractionEl.innerText = `${data.stats.correct}/${data.stats.answered} correct`;
-
-                                // --- Circular Progress Dynamic Update ---
-                                let accuracy = data.stats.accuracy || 0;
-                                let circleColor = "#cbd5e1";
-                                if (data.stats.answered > 0) {
-                                    circleColor =
-                                        accuracy >= 70
-                                            ? "#10b981"
-                                            : accuracy >= 40
-                                            ? "#f59e0b"
-                                            : "#ef4444";
-                                }
-
-                                let circumference = 276.46015351590177;
-                                let dashOffset =
-                                    circumference - (accuracy / 100) * circumference;
-
-                                let statCircle = document.getElementById("stat-circle");
-                                if (statCircle) {
-                                    statCircle.setAttribute("stroke", circleColor);
-                                    statCircle.setAttribute(
-                                        "stroke-dashoffset",
-                                        dashOffset
-                                    );
-                                }
-
-                                let statPercentage = document.getElementById("stat-percentage");
-                                if (statPercentage) {
-                                    statPercentage.innerText = accuracy + "%";
-                                    statPercentage.style.color = circleColor;
-                                }
-                            }
-
-                            // Apply show.blade.php "Intelligence" mapping
-                            let correctArray = String(data.correct_answer || "")
-                                .split(",")
-                                .map((s) => s.trim())
-                                .filter(Boolean)
-                                .sort();
-                            let selectedArray = String(selectedValue || "")
-                                .split(",")
-                                .map((s) => s.trim())
-                                .filter(Boolean)
-                                .sort();
-
-                            let exactCorrectStr = correctArray.join(", ");
-                            let pickedAnswerStr = selectedArray.join(", ");
-
-                            
-                            let isFullyCorrect = false;
-                            if (isMulti) {
-                                isFullyCorrect =
-                                    JSON.stringify(selectedArray) ===
-                                    JSON.stringify(correctArray);
-                            } else {
-                                isFullyCorrect =
-                                    JSON.stringify(selectedArray) ===
-                                    JSON.stringify(correctArray);
-                                if (!isFullyCorrect && data.is_correct) {
-                                    isFullyCorrect = true;
-                                }
-                            }
-
-                            // --- Fire Streak Engine ---
-                            if (isFullyCorrect) {
-                                currentStreak++;
-                            } else {
-                                currentStreak = 0;
-                            }
-
-                            const streakContainer =
-                                document.getElementById("streak-container");
-                            const streakCountEl =
-                                document.getElementById("streak-count");
-
-                            if (streakContainer && streakCountEl) {
-                                if (currentStreak > 0) {
-                                    streakCountEl.innerText = currentStreak;
-                                    streakContainer.style.display = "flex";
-                                } else {
-                                    streakContainer.style.display = "none";
-                                }
-                            }
-
-                            // Mark Nav bar Red
-                            const navBtn = document.getElementById(
-                                "nav-btn-" + index
-                            );
-                            if (navBtn) {
-                                let newState = isFullyCorrect
-                                    ? "correct"
-                                    : "incorrect";
-                                navBtn.setAttribute("data-state", newState);
-
-                                let base =
-                                    "nav-btn w-full aspect-square rounded-xl border-2 flex items-center justify-center text-xs font-bold transition-all duration-200 select-none cursor-pointer scale-105 shadow-md ";
-
-                                if (isFullyCorrect) {
-                                    navBtn.className =
-                                        base +
-                                        "bg-emerald-500 border-emerald-500 text-white shadow-emerald-500/40";
-                                } else {
-                                    navBtn.className =
-                                        base +
-                                        "bg-red-500 border-red-500 text-white shadow-red-500/40";
-                                }
-                            }
-
-                            // Update mobile dots
-                            const mobileDots = document.querySelectorAll(
-                                "#mobile-progress-bar .mobile-dot"
-                            );
-                            if (mobileDots[index]) {
-                                mobileDots[index].className =
-                                    "flex-1 h-1.5 rounded-full transition-all mobile-dot " +
-                                    (isFullyCorrect
-                                        ? "bg-emerald-500"
-                                        : "bg-red-500");
-                            }
-
-                            // 4. Highlight Correct
-                            answerOptions.forEach((opt) => {
-                                const val = opt.getAttribute("data-value");
-                                let iconBox = opt.querySelector(".option-icon");
-
-                                opt.classList.remove(
-                                    "border-[#06BBCC]",
-                                    "bg-[#06BBCC]/5",
-                                    "is-selected"
-                                );
-
-                                if (correctArray.includes(val)) {
-                                    opt.classList.remove(
-                                        "opacity-40",
-                                        "border-slate-200"
-                                    );
-                                    opt.classList.add(
-                                        "border-emerald-400",
-                                        "bg-emerald-50",
-                                        "shadow-emerald-100",
-                                        "shadow-md",
-                                        "opacity-100"
-                                    );
-
-                                    iconBox.classList.remove(
-                                        "bg-slate-100",
-                                        "text-slate-500"
-                                    );
-                                    iconBox.classList.add(
-                                        "bg-emerald-500",
-                                        "text-white"
-                                    );
-                                    iconBox.innerHTML =
-                                        '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-check w-5 h-5"><circle cx="12" cy="12" r="10"></circle><path d="m9 12 2 2 4-4"></path></svg>';
-                                } else if (
-                                    selectedArray.includes(val) &&
-                                    !isFullyCorrect
-                                ) {
-                                    opt.classList.remove(
-                                        "opacity-40",
-                                        "border-slate-200"
-                                    );
-                                    opt.classList.add(
-                                        "border-red-400",
-                                        "bg-red-50",
-                                        "shadow-red-100",
-                                        "shadow-md",
-                                        "opacity-100"
-                                    );
-
-                                    iconBox.classList.remove(
-                                        "bg-slate-100",
-                                        "text-slate-500"
-                                    );
-                                    iconBox.classList.add(
-                                        "bg-red-500",
-                                        "text-white"
-                                    );
-                                    iconBox.innerHTML =
-                                        '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-x w-5 h-5"><circle cx="12" cy="12" r="10"></circle><path d="m15 9-6 6"></path><path d="m9 9 6 6"></path></svg>';
-                                }
-                            });
-
-                            // 5. Populate and Show "Intelligent" Rationale
-                            const rationaleContainer = slide.querySelector(
-                                ".rationale-container"
-                            );
-                            const rationaleBox =
-                                rationaleContainer.querySelector(
-                                    ".rationale-box"
-                                );
-                            const rHeader =
-                                rationaleBox.querySelector(".r-header");
-
-                            rHeader.className =
-                                "flex flex-wrap gap-3 mb-3 r-header";
-
-                            if (isFullyCorrect) {
-                                rationaleBox.classList.remove(
-                                    "border-red-200",
-                                    "bg-red-50/40"
-                                );
-                                rationaleBox.classList.add(
-                                    "border-emerald-200",
-                                    "bg-emerald-50/40"
-                                );
-                                rHeader.innerHTML = `
-                                    <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-semibold bg-emerald-100 text-emerald-700">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-check"><circle cx="12" cy="12" r="10"></circle><path d="m9 12 2 2 4-4"></path></svg>
-                                        Your Answer: Option(s) ${pickedAnswerStr}
-                                    </div>
-                                `;
-                            } else {
-                                rationaleBox.classList.remove(
-                                    "border-emerald-200",
-                                    "bg-emerald-50/40"
-                                );
-                                rationaleBox.classList.add(
-                                    "border-red-200",
-                                    "bg-red-50/40"
-                                );
-                                rHeader.innerHTML = `
-                                    <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-semibold bg-red-100 text-red-600">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-x"><circle cx="12" cy="12" r="10"></circle><path d="m15 9-6 6"></path><path d="m9 9 6 6"></path></svg>
-                                        Your Answer: Option(s) ${pickedAnswerStr}
-                                    </div>
-                                    <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-semibold bg-emerald-100 text-emerald-700">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-check"><circle cx="12" cy="12" r="10"></circle><path d="m9 12 2 2 4-4"></path></svg>
-                                        Correct Answer: Option(s) ${exactCorrectStr}
-                                    </div>
-                                `;
-                            }
-
-                            rationaleContainer.style.display = "block";
-                            rationaleContainer.classList.remove("is-hidden");
-
-                            // 6. Toggle Footer Buttons Globally
-                            document
-                                .querySelectorAll(".select-to-continue")
-                                .forEach(function (msgEl) {
-                                    msgEl.style.display = "none";
-                                    msgEl.classList.add("is-hidden");
-                                });
-
-                            document
-                                .querySelectorAll(".options-container")
-                                .forEach(function (cont) {
-                                    if (
-                                        cont.getAttribute("data-multi") !==
-                                        "true"
-                                    ) {
-                                        var idx =
-                                            cont.getAttribute("data-index");
-                                        var s = document.getElementById(
-                                            "slide-" + idx
-                                        );
-                                        syncSlideFooter(s);
-                                    }
-                                });
-
-                            syncSlideFooter(slide);
+                        if (data.success && data.stats) {
+                            updateQuizStats(data.stats);
                         }
                     })
                     .catch((error) => {
-                        
-                        console.error("Failed to submit answer:", error);
-                        
-                        answerOptions.forEach((opt) => {
-                            opt.disabled = false;
-                            opt.classList.remove("opacity-40", "cursor-default");
-                            opt.classList.add(
-                                "hover:border-[#06BBCC]/60",
-                                "hover:bg-[#06BBCC]/3",
-                                "cursor-pointer",
-                                "hover:shadow-sm"
-                            );
-                        });
-                        
-                        if (checkAnswerBtn) checkAnswerBtn.style.display = "flex";
+                        console.error("Failed to save answer:", error);
                     });
             };
 

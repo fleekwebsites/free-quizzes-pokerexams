@@ -11,6 +11,11 @@ class SidebarNavigationService
 {
     public function schoolsWithCourses(): Collection
     {
+        return $this->schoolsWithCoursesAndExams();
+    }
+
+    public function schoolsWithCoursesAndExams(): Collection
+    {
         if (! Schema::hasTable('schools') || ! Schema::hasTable('courses')) {
             return collect();
         }
@@ -19,7 +24,7 @@ class SidebarNavigationService
             ->orderBy('schoolname')
             ->get();
 
-        return $schools
+        $schools = $schools
             ->map(function (object $school) {
                 $school->courses = DB::table('courses')
                     ->where('school_id', $school->id)
@@ -34,6 +39,33 @@ class SidebarNavigationService
             })
             ->filter(fn (object $school) => $school->course_count > 0)
             ->values();
+
+        if (! Schema::hasTable('free_exams') || $schools->isEmpty()) {
+            return $schools;
+        }
+
+        $courseIds = $schools
+            ->flatMap(fn (object $school) => $school->courses->pluck('id'))
+            ->unique()
+            ->values();
+
+        $examsByCourse = DB::table('free_exams')
+            ->whereIn('course_id', $courseIds)
+            ->orderBy('title')
+            ->get(['id', 'course_id', 'slug', 'title', 'question_count'])
+            ->groupBy('course_id');
+
+        return $schools->map(function (object $school) use ($examsByCourse) {
+            $school->courses = $school->courses->map(function (object $course) use ($examsByCourse) {
+                $course->exams = $examsByCourse->get($course->id, collect())->values();
+
+                return $course;
+            });
+
+            $school->exam_count = $school->courses->sum(fn (object $course) => $course->exams->count());
+
+            return $school;
+        });
     }
 
     public function totalCourseCount(): int

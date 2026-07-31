@@ -158,6 +158,7 @@ button {
     text-align: left;
     transition: all 0.15s;
     color: #475569;
+    text-decoration: none;
 }
 .sidebar-menu-btn:hover {
     color: #0f172a;
@@ -432,6 +433,9 @@ button {
     .cat-card-header {
         cursor: default;
     }
+    body[data-library-shell="1"] .cat-card-header {
+        cursor: pointer;
+    }
 }
 .cat-card-title-row {
     display: flex;
@@ -461,6 +465,13 @@ button {
     font-weight: 800;
     color: #1f2937;
     line-height: 1.25;
+}
+.cat-title a {
+    color: inherit;
+    text-decoration: none;
+}
+.cat-title a:hover {
+    color: #0597a7;
 }
 .cat-badge {
     font-size: 11px;
@@ -550,6 +561,199 @@ button {
     border: 2px dashed;
     transition: all 0.2s;
 }
+
+/* Library shell views */
+.library-view.is-hidden {
+    display: none !important;
+}
+
+/* School explorer (sidebar-driven course + exam list) */
+.school-explorer {
+    border-radius: clamp(0.75rem, 2vw, 1.25rem);
+    border: 2px solid transparent;
+    padding: clamp(0.875rem, 2.5vw, 1.5rem);
+    margin-bottom: 1.5rem;
+}
+
+.school-explorer-header {
+    margin-bottom: clamp(1rem, 2vw, 1.5rem);
+}
+
+.school-explorer-title-row {
+    display: flex;
+    align-items: center;
+    gap: clamp(0.625rem, 2vw, 0.875rem);
+}
+
+.school-explorer-title-inner {
+    flex: 1;
+    min-width: 0;
+}
+
+.school-explorer-title {
+    font-size: clamp(1.125rem, 2.5vw, 1.75rem);
+    font-weight: 800;
+    color: #1f2937;
+    line-height: 1.2;
+}
+
+.school-explorer-meta {
+    margin-top: 0.25rem;
+    font-size: clamp(0.75rem, 1.6vw, 0.9375rem);
+    font-weight: 600;
+    color: #64748b;
+}
+
+.school-course-grid {
+    display: grid;
+    gap: clamp(0.75rem, 2vw, 1rem);
+    grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+    .school-course-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 1024px) {
+    .school-course-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 1536px) {
+    .school-course-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 1920px) {
+    .main-content-inner {
+        max-width: min(96rem, 92vw);
+    }
+}
+
+.school-course-card {
+    background: rgba(255, 255, 255, 0.92);
+    border: 2px solid rgba(226, 232, 240, 0.95);
+    border-radius: clamp(0.75rem, 1.5vw, 1rem);
+    padding: clamp(0.75rem, 2vw, 1rem);
+    min-width: 0;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.school-course-card.is-active {
+    border-color: #06bbcc;
+    box-shadow: 0 0 0 3px rgba(6, 187, 204, 0.12);
+}
+
+.school-course-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.625rem;
+}
+
+.school-course-name {
+    font-size: clamp(0.875rem, 1.8vw, 1rem);
+    font-weight: 800;
+    color: #1f2937;
+    line-height: 1.3;
+}
+
+.school-course-badge {
+    flex-shrink: 0;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    padding: 0.125rem 0.5rem;
+    border-radius: 9999px;
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.school-exam-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.school-exam-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: clamp(0.45rem, 1.2vw, 0.625rem) clamp(0.625rem, 1.5vw, 0.75rem);
+    border-radius: 0.625rem;
+    border: 1px solid transparent;
+    color: #334155;
+    font-size: clamp(0.8125rem, 1.5vw, 0.875rem);
+    font-weight: 500;
+    transition: all 0.15s ease;
+}
+
+.school-exam-link:hover {
+    background: rgba(6, 187, 204, 0.06);
+    border-color: rgba(6, 187, 204, 0.2);
+    color: #0f766e;
+}
+
+.school-exam-title {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.school-exam-meta {
+    flex-shrink: 0;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    color: #64748b;
+}
+
+.school-exam-empty {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8125rem;
+    color: #94a3b8;
+}
+
+@media (max-width: 360px) {
+    .school-explorer {
+        padding: 0.75rem;
+    }
+
+    .school-exam-link {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.125rem;
+    }
+
+    .school-exam-title {
+        white-space: normal;
+    }
+}
+
+.school-explorer.theme-college .school-course-card.is-active { border-color: #60a5fa; }
+.school-explorer.theme-nursing .school-course-card.is-active { border-color: #fb923c; }
+.school-explorer.theme-allied .school-course-card.is-active { border-color: #38bdf8; }
+.school-explorer.theme-insurance .school-course-card.is-active { border-color: #a78bfa; }
+.school-explorer.theme-realestate .school-course-card.is-active { border-color: #34d399; }
+.school-explorer.theme-it .school-course-card.is-active { border-color: #fbbf24; }
+.school-explorer.theme-business .school-course-card.is-active { border-color: #818cf8; }
+.school-explorer.theme-teaching .school-course-card.is-active { border-color: #fb7185; }
+.school-explorer.theme-professional .school-course-card.is-active { border-color: #22d3ee; }
+
+.school-explorer.theme-college { background: linear-gradient(to bottom right, #eff6ff, #eef2ff); border-color: #bfdbfe; }
+.school-explorer.theme-nursing { background: linear-gradient(to bottom right, #fff7ed, #ffedd5); border-color: #fed7aa; }
+.school-explorer.theme-allied { background: linear-gradient(to bottom right, #f0f9ff, #e0f2fe); border-color: #bae6fd; }
+.school-explorer.theme-insurance { background: linear-gradient(to bottom right, #f5f3ff, #ede9fe); border-color: #ddd6fe; }
+.school-explorer.theme-realestate { background: linear-gradient(to bottom right, #ecfdf5, #d1fae5); border-color: #a7f3d0; }
+.school-explorer.theme-it { background: linear-gradient(to bottom right, #fffbeb, #fef3c7); border-color: #fde68a; }
+.school-explorer.theme-business { background: linear-gradient(to bottom right, #eef2ff, #e0e7ff); border-color: #c7d2fe; }
+.school-explorer.theme-teaching { background: linear-gradient(to bottom right, #fff1f2, #ffe4e6); border-color: #fecdd3; }
+.school-explorer.theme-professional { background: linear-gradient(to bottom right, #ecfeff, #cffafe); border-color: #a5f3fc; }
 
 /* === CARD THEMES EXACT MATCHES === */
 
@@ -2210,57 +2414,45 @@ html.dark-theme .linear-track {
   z-index: 9999;
   display: flex;
   align-items: center;
-  justify-content: center; /* Centers content for when it becomes a circle */
-  gap: 10px;
-  background-color: #25D366; 
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  padding: 0;
+  border-radius: 50%;
+  background-color: #25D366;
   color: white;
-  font-family: 'Inter', sans-serif;
-  font-size: 15px;
-  font-weight: 600;
-  padding: 12px 20px;
-  border-radius: 50px;
   text-decoration: none;
-  box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
   transition: all 0.3s ease;
 }
 
 .wa-floating-widget:hover {
-  background-color: #128C7E; 
+  background-color: #128C7E;
   transform: translateY(-4px);
   color: white;
 }
 
-/* 📱 Standard Mobile Devices (Phones) */
+.wa-floating-widget svg {
+  width: 30px;
+  height: 30px;
+  margin: 0;
+}
+
 @media (max-width: 768px) {
   .wa-floating-widget {
     bottom: 15px;
     right: 15px;
-    padding: 0;
-    width: 60px; /* Hardcoded width creates a perfect circle */
-    height: 60px; /* Hardcoded height matches width */
-    border-radius: 50%;
-  }
-  
-  .wa-floating-widget svg {
-    width: 30px;
-    height: 30px;
-    margin: 0;
-  }
-  
-  .wa-text {
-    display: none; /* Hides the text completely */
   }
 }
 
-/* ⌚ Ultra-Small Screens (Smartwatches or very small phones) */
 @media (max-width: 360px) {
   .wa-floating-widget {
     bottom: 10px;
     right: 10px;
-    width: 50px; /* Scales the circle down further */
+    width: 50px;
     height: 50px;
   }
-  
+
   .wa-floating-widget svg {
     width: 26px;
     height: 26px;
@@ -3510,19 +3702,57 @@ input {
         gap: 0.5rem !important;
     }
     .exam-action-bar {
-        flex-direction: column !important;
-        align-items: flex-start !important;
-        gap: 0.5rem !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        gap: 0.25rem !important;
     }
     .exam-action-bar > nav {
-        width: 100%;
+        flex: 1 1 auto;
+        min-width: 0;
+        width: auto;
     }
     .action-buttons-group {
-        width: 100%;
+        flex: 0 0 auto;
+        width: auto;
         justify-content: flex-end !important;
-        padding-top: 0.5rem;
-        border-top: 1px solid #f1f5f9;
-        margin-top: 0.25rem;
+        padding-top: 0;
+        border-top: none;
+        margin-top: 0;
+    }
+    .action-buttons-group button {
+        padding-left: 0.375rem !important;
+        padding-right: 0.375rem !important;
+    }
+    .exam-crumb-school {
+        max-width: 4.5rem;
+    }
+    .exam-crumb-course {
+        max-width: 4.5rem;
+    }
+    .exam-crumb-title {
+        max-width: 5.5rem;
+    }
+}
+@media (min-width: 480px) and (max-width: 640px) {
+    .exam-crumb-school {
+        max-width: 6.25rem;
+    }
+    .exam-crumb-course {
+        max-width: 6.25rem;
+    }
+    .exam-crumb-title {
+        max-width: 7.5rem;
+    }
+}
+@media (min-width: 641px) {
+    .exam-crumb-school {
+        max-width: 12.5rem;
+    }
+    .exam-crumb-course {
+        max-width: 12.5rem;
+    }
+    .exam-crumb-title {
+        max-width: 20rem;
     }
 }
 /* Header nav mobile optimization */
@@ -5489,6 +5719,13 @@ svg { max-width: 100%; }
 }
 .answer-option[disabled] {
     cursor: default;
+}
+.answer-option.is-revealed {
+    transition: none !important;
+}
+.question-slide .rationale-container {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 120px;
 }
 .question-slide .rationale-container.is-hidden {
     display: none !important;

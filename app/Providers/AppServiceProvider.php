@@ -21,9 +21,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        View::composer('partials.sidebar', function ($view) {
+        View::composer(['partials.sidebar', 'subject', 'index'], function ($view) {
             $navigation = app(SidebarNavigationService::class);
-            $view->with('sidebarSchools', $navigation->schoolsWithCourses());
+            $sidebarSchools = $navigation->schoolsWithCoursesAndExams();
+
+            $view->with('sidebarSchools', $sidebarSchools);
             $view->with('sidebarCourseCount', $navigation->totalCourseCount());
         });
     }

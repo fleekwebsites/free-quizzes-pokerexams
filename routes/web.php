@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\CourseController;
 use App\Http\Controllers\ExamController;
 use App\Http\Controllers\ExamSubmitController;
 use App\Http\Controllers\InteractionController;
@@ -27,24 +26,8 @@ Route::get('/robots.txt', function () {
 Route::post('/exam/submit-answer', [ExamSubmitController::class, 'submitAnswer'])
     ->name('exam.submit');
 
-Route::redirect('/subject', '/teacher-certification-and-licensure-exam-prep');
-Route::redirect(
-    '/quiz',
-    '/teacher-certification-and-licensure-exam-prep/praxis-core-and-subject-assessment-practice-tests/praxis-5001-quiz-1'
-);
-
-Route::get('/{subdivision}/courses/{course}', function (string $subdivision, string $course) {
-    return redirect()->route('course.show', [
-        'subdivision' => $subdivision,
-        'course' => $course,
-    ], 301);
-});
-
 Route::get('/{subdivision}/{course}/{exam}', [ExamController::class, 'show'])
     ->name('exam.show');
-
-Route::get('/{subdivision}/{course}', [CourseController::class, 'show'])
-    ->name('course.show');
 
 Route::get('/{subdivision}', [SubdivisionController::class, 'show'])
     ->name('subdivision.show');
