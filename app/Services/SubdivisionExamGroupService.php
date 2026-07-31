@@ -9,9 +9,6 @@ use Illuminate\Support\Facades\DB;
 
 class SubdivisionExamGroupService
 {
-    /**
-     * @return array<string, Collection<int, FreeExam>>
-     */
     public function groupFreeExamsBySubject(Subdivision $subdivision, Collection $freeExams): array
     {
         $groups = [];
@@ -25,7 +22,6 @@ class SubdivisionExamGroupService
 
         return array_map(fn (array $exams) => collect($exams), $groups);
     }
-
     private function subjectNameForFreeExam(FreeExam $freeExam): string
     {
         if ($freeExam->subject_id) {
@@ -34,10 +30,8 @@ class SubdivisionExamGroupService
                 return $name;
             }
         }
-
         return 'General';
     }
-
     public function primaryCourseName(int $schoolId): ?string
     {
         return DB::table('courses')
@@ -46,14 +40,12 @@ class SubdivisionExamGroupService
             ->orderBy('coursename')
             ->value('coursename');
     }
-
     public function courseNameForFreeExam(int $schoolId, string $freeExamTitle): ?string
     {
         $course = $this->courseForFreeExam($schoolId, $freeExamTitle);
 
         return $course?->coursename ?? $this->primaryCourseName($schoolId);
     }
-
     public function courseForFreeExam(int $schoolId, string $freeExamTitle): ?object
     {
         $freeExam = FreeExam::query()
@@ -70,22 +62,16 @@ class SubdivisionExamGroupService
             ->select('id', 'coursename', 'slug')
             ->first();
     }
-
     public function courseForFreeExamModel(FreeExam $freeExam): ?object
     {
         if (! $freeExam->course_id) {
             return null;
         }
-
         return DB::table('courses')
             ->where('id', $freeExam->course_id)
             ->select('id', 'coursename', 'slug')
             ->first();
     }
-
-    /**
-     * @return Collection<int, FreeExam>
-     */
     public function freeExamsForCourse(Subdivision $subdivision, int $courseId): Collection
     {
         return FreeExam::query()
