@@ -96,7 +96,6 @@
                             <h1 class="exam-crumb-title text-[#1F2937] font-semibold truncate min-w-0">
                                 {{ $exam->title }}</h1>
                         </nav>
-
                         <div class="flex items-center gap-0.5 action-buttons-group shrink-0">
                             <div class="relative">
                                 <button id="btn-rate-quiz"
@@ -111,9 +110,7 @@
                                     </svg>
                                     <span class="hidden sm:inline">Rate</span>
                                 </button>
-
                             </div>
-
                             <button
                                 class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all text-slate-400 hover:text-[#06BBCC] hover:bg-[#06BBCC]/5"
                                 title="Copy link">

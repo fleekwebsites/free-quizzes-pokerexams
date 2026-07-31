@@ -13,7 +13,6 @@ class SidebarNavigationService
     {
         return $this->schoolsWithCoursesAndExams();
     }
-
     public function schoolsWithCoursesAndExams(): Collection
     {
         if (! Schema::hasTable('schools') || ! Schema::hasTable('courses')) {

@@ -157,7 +157,7 @@ class FreeSeeder extends Seeder
                 'choiceG' => $this->nullable($data['choiceG'] ?? null),
                 'correctAnswer' => $data['correctAnswer'],
                 'rationale' => $this->nullable($data['rationale'] ?? null) ?? '',
-                'image' => $this->nullable($data['image'] ?? null),
+                'image' => normalize_question_image($this->nullable($data['image'] ?? null)),
                 'qtype' => $data['qtype'],
                 'heading' => $this->nullable($data['heading'] ?? null),
                 'created_at' => $now,

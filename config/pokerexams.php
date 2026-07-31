@@ -10,6 +10,15 @@ return [
     */
     'main_site_url' => rtrim(env('MAIN_SITE_URL', 'https://pokerexams.com'), '/'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Question images (this subdomain only)
+    |--------------------------------------------------------------------------
+    | CSV `image` column and image-type choices store filenames only.
+    | Place files under public/img/questions/ (or the path below).
+    */
+    'question_images_path' => 'img/questions',
+
     'whatsapp' => [
         'phone' => env('WHATSAPP_PHONE', '15107718152'),
         'message' => env('WHATSAPP_MESSAGE', 'Hello...'),

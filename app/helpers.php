@@ -23,6 +23,41 @@ if (! function_exists('free_url')) {
     }
 }
 
+if (! function_exists('normalize_question_image')) {
+    /** Normalize a question image value to a safe local filename. */
+    function normalize_question_image(?string $value): ?string
+    {
+        $value = trim((string) $value);
+        if ($value === '') {
+            return null;
+        }
+
+        if (preg_match('#^https?://#i', $value)) {
+            $path = parse_url($value, PHP_URL_PATH) ?: '';
+            $value = basename($path);
+        } else {
+            $value = basename(str_replace('\\', '/', $value));
+        }
+
+        return $value === '' ? null : $value;
+    }
+}
+
+if (! function_exists('question_image_url')) {
+    /** Public URL for a question image served from this subdomain. */
+    function question_image_url(?string $filename): ?string
+    {
+        $filename = normalize_question_image($filename);
+        if ($filename === null) {
+            return null;
+        }
+
+        $base = trim(config('pokerexams.question_images_path', 'img/questions'), '/');
+
+        return asset($base.'/'.$filename);
+    }
+}
+
 if (! function_exists('seo_absolute_url')) {
     /** Absolute URL for JSON-LD and canonical structured data. */
     function seo_absolute_url(?string $value): string

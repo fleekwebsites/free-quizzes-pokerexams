@@ -1,7 +1,6 @@
 @php
     $totalExamQuestions = $questions->count();
     $currentIndex = $currentIndex ?? 0;
-    $imageBaseUrl = rtrim(config('pokerexams.main_site_url'), '/') . '/img/questions/';
 @endphp
 
 <div class="hidden lg:flex flex-col w-20 xl:w-24 shrink-0 lg:sticky lg:top-24 h-[calc(100vh-7rem)]">
@@ -53,8 +52,8 @@
                 <p class="mt-2 text-xl lg:text-2xl font-bold text-[#1F2937] leading-relaxed">
                     {!! nl2br(e($q->question)) !!}
                 </p>
-                @if (!empty($q->image))
-                    <img src="{{ $imageBaseUrl . $q->image }}" alt="" class="mt-4 rounded-xl max-w-full" loading="lazy">
+                @if ($questionImageUrl = question_image_url($q->image))
+                    <img src="{{ $questionImageUrl }}" alt="" class="mt-4 rounded-xl max-w-full" loading="lazy">
                 @endif
             </div>
 
@@ -76,7 +75,7 @@
                                     {{ $letter }}
                                 </div>
                                 @if ($isActualImage)
-                                    <img src="{{ $imageBaseUrl . $choiceText }}" alt="Option {{ $letter }}"
+                                    <img src="{{ question_image_url($choiceText) }}" alt="Option {{ $letter }}"
                                         class="max-w-full h-auto max-h-64 object-contain rounded-lg" loading="lazy">
                                 @else
                                     <span class="text-sm lg:text-base text-[#1F2937] font-medium leading-snug">{{ $choiceText }}</span>
