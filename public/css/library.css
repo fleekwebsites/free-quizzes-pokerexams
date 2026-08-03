@@ -5730,6 +5730,21 @@ svg { max-width: 100%; }
 .question-slide .rationale-container.is-hidden {
     display: none !important;
 }
+.question-slide .rationale-rich-text h2 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 0 0 0.75rem;
+    line-height: 1.4;
+}
+.question-slide .rationale-rich-text b,
+.question-slide .rationale-rich-text strong {
+    font-weight: 600;
+    color: #374151;
+}
+.question-slide .rationale-rich-text p {
+    margin: 0 0 0.75rem;
+}
 .question-slide .btn-check-answer.is-hidden,
 .question-slide .btn-next-question.is-hidden,
 .question-slide .select-to-continue.is-hidden {

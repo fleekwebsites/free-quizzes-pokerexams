@@ -90,7 +90,7 @@
                 <div class="rounded-2xl border-2 p-5 mb-5 rationale-box border-slate-200 bg-slate-50/40">
                     <div class="flex flex-wrap gap-3 mb-3 r-header"></div>
                     <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Rationale</p>
-                    <div class="text-sm text-slate-700 leading-relaxed r-body">{!! nl2br(e($q->rationale ?? '')) !!}</div>
+                    <div class="text-sm text-slate-700 leading-relaxed r-body rationale-rich-text">{!! $q->rationale ?? '' !!}</div>
                 </div>
             </div>
 
