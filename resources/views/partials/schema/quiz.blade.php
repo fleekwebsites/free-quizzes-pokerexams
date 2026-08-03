@@ -42,6 +42,16 @@
         ];
     })->values()->all();
 
+    $organization = [
+        '@type' => 'Organization',
+        'name' => 'Poker Exams',
+        'url' => config('pokerexams.main_site_url', 'https://pokerexams.com'),
+        'logo' => [
+            '@type' => 'ImageObject',
+            'url' => seo_absolute_url(asset('img/logo.png')),
+        ],
+    ];
+
     $quizSchema = [
         '@context' => 'https://schema.org',
         '@type' => 'Quiz',
@@ -49,11 +59,17 @@
         'name' => $exam->title,
         'description' => 'Free practice quiz: '.$exam->title.' for '.$subdivision->schoolname,
         'url' => seo_absolute_url($canonical),
+        'author' => $organization,
+        'publisher' => $organization,
         'educationalLevel' => 'Professional',
         'learningResourceType' => 'Quiz',
         'interactivityType' => 'active',
         'numberOfQuestions' => $questions->count(),
         'hasPart' => $questionParts,
     ];
+
+    if ($publishedAt = ($exam->created_at ?? $exam->updated_at)) {
+        $quizSchema['datePublished'] = $publishedAt->toIso8601String();
+    }
 @endphp
 <script type="application/ld+json">@json($quizSchema, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)</script>

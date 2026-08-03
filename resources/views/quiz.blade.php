@@ -147,11 +147,11 @@
 
                                 @include('partials.quiz-content')
 
-                            </div>
-                        </div>
+                                    </div>
+                                        </div>
 
                         @include('partials.quiz-sidebar')
-                    </div>
+                                        </div>
                 </div>
             </div>
 

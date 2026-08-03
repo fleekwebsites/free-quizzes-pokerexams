@@ -90,7 +90,7 @@
                         <span class="sb-text">{{ $school->schoolname }}</span>
                         <span class="sb-count">{{ $school->course_count }}</span>
                     </a>
-                </div>
+                    </div>
             @endforeach
                 </div>
             </div>

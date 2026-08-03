@@ -102,7 +102,7 @@
                 @else
                     <div class="school-explorer theme-college">
                         <p class="course-desc" style="padding: 1.5rem;">No courses are available for this category yet.</p>
-                    </div>
+                        </div>
                 @endif
             </div>
         </main>
