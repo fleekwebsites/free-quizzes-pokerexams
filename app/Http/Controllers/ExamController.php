@@ -6,6 +6,7 @@ use App\Models\FreeExam;
 use App\Models\Subdivision;
 use App\Services\FreeExamSidebarService;
 use App\Services\SubdivisionExamGroupService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
@@ -16,7 +17,7 @@ class ExamController extends Controller
         private SubdivisionExamGroupService $examGroupService,
     ) {}
 
-    public function show(Subdivision $subdivision, string $course, string $exam): View
+    public function show(Subdivision $subdivision, string $course, string $exam): View|RedirectResponse
     {
         $courseRow = DB::table('courses')
             ->where('school_id', $subdivision->id)
@@ -28,8 +29,18 @@ class ExamController extends Controller
 
         $freeExam = FreeExam::query()
             ->where('subdivision_id', $subdivision->id)
-            ->where('slug', $exam)
+            ->where(function ($query) use ($exam) {
+                $query->where('new_slug', $exam)
+                    ->orWhere('slug', $exam);
+            })
             ->firstOrFail();
+        if ($freeExam->new_slug && $exam !== $freeExam->new_slug) {
+            return redirect()->route('exam.show', [
+                'subdivision' => $subdivision,
+                'course' => $course,
+                'exam' => $freeExam->new_slug,
+            ], 301);
+        }
 
         abort_if((int) $freeExam->course_id !== (int) $courseRow->id, 404);
 
@@ -62,12 +73,12 @@ class ExamController extends Controller
             'canonical' => route('exam.show', [
                 'subdivision' => $subdivision,
                 'course' => $currentCourse->slug,
-                'exam' => $freeExam,
+                'exam' => $freeExam->new_slug ?? $freeExam->slug,
             ]),
             'activeGroup' => SubdivisionController::groupKeyForSlug($subdivision->slug),
             'activeSubdivisionSlug' => $subdivision->slug,
             'activeCourseSlug' => $currentCourse->slug,
-            'activeExam' => $freeExam->slug,
+            'activeExam' => $freeExam->new_slug ?? $freeExam->slug,
         ]);
     }
 }

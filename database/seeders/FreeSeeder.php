@@ -420,14 +420,21 @@ class FreeSeeder extends Seeder
             return $this->examCache[$cacheKey];
         }
 
+        // Generate the clean slug strictly from the exam title
+        $cleanSlug = $this->buildExamSlug($examTitle);
+        $slug = $this->reserveUniqueSlug('free_exams', $cleanSlug);
+
+        // If you want 'slug' to be the old format for backward compatibility 
+        // and 'new_slug' to be the clean format, handle it here:
         $courseSlug = $this->courseSlugById[$courseId] ?? $this->loadCourseSlug($courseId);
-        $slug = $this->reserveUniqueSlug('free_exams', $this->buildExamSlug($courseSlug, $examTitle));
+        $oldFormatSlug = $this->reserveUniqueSlug('free_exams', Str::slug($courseSlug.'-'.$cleanSlug));
 
         $id = (int) DB::table('free_exams')->insertGetId([
             'subdivision_id' => $schoolId,
             'course_id' => $courseId,
             'subject_id' => $subjectId,
-            'slug' => $slug,
+            'slug' => $oldFormatSlug,    // Keeps working for old URLs
+            'new_slug' => $slug,         // The new clean slug
             'title' => $examTitle,
             'question_count' => 0,
             'created_at' => $now,
@@ -449,16 +456,9 @@ class FreeSeeder extends Seeder
         return $slug;
     }
 
-    private function buildExamSlug(string $courseSlug, string $examTitle): string
+    private function buildExamSlug(string $examTitle): string
     {
-        $titleSlug = Str::slug($examTitle) ?: 'quiz';
-        $candidate = Str::slug($courseSlug.'-'.$titleSlug);
-
-        if (strlen($candidate) > 60) {
-            $candidate = rtrim(substr($candidate, 0, 60), '-');
-        }
-
-        return $candidate;
+        return Str::slug($examTitle) ?: 'quiz';
     }
 
     private function reserveUniqueSlug(string $table, string $base): string

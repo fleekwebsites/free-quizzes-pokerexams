@@ -701,10 +701,10 @@ button {
 
 .school-exam-title {
     min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
+    overflow: visible;   
+    text-overflow: clip;      
+    white-space: normal;
+  }
 
 .school-exam-meta {
     flex-shrink: 0;
